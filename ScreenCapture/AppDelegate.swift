@@ -4,7 +4,7 @@
 //  ScreenCapture
 //
 //  Created by Petri Damstén on 24.12.2015.
-//  Copyright © 2015 Petri Damstén. All rights reserved.
+//  Copyright © 2015-2023 Petri Damstén. All rights reserved.
 //  petri.damsten@gmail.com
 //
 //  This program is free software; you can redistribute it and/or modify
@@ -28,13 +28,10 @@ import Cocoa
 
 // TODO: Add to login items
 
-@NSApplicationMain
+@main
 class AppDelegate: NSObject, NSApplicationDelegate {
+    var statusBarItem: NSStatusItem!
 
-    @IBOutlet weak var window: NSWindow!
-    @IBOutlet weak var statusMenu: NSMenu!
-    
-    let statusItem = NSStatusBar.systemStatusBar().statusItemWithLength(-1)
     let SC = "/usr/sbin/screencapture"
     let DEFAULTS = "/usr/bin/defaults"
     let KILLALL = "/usr/bin/killall"
@@ -42,40 +39,62 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var destinationFolder = ""
 
     func saveName() -> String {
-        let formatter = NSDateFormatter()
+        let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        var s = formatter.stringFromDate(NSDate())
+        var s = formatter.string(from: Date())
         formatter.dateFormat = "HH.mm.ss"
-        s += " at " + formatter.stringFromDate(NSDate())
+        s += " at " + formatter.string(from: Date())
         return "/Screen Shot " + s + ".png"
     }
 
     func isDir(dir: String) -> Bool {
         var isDirectory: ObjCBool = ObjCBool(false)
-        if NSFileManager.defaultManager().fileExistsAtPath(dir, isDirectory: &isDirectory) {
+        if FileManager.default.fileExists(atPath: dir, isDirectory: &isDirectory) {
             if isDirectory.boolValue {
                 return true
             }
         }
         return false
     }
-    
-    func applicationDidFinishLaunching(aNotification: NSNotification) {
-        let icon = NSImage(named: "statusIcon")
-        icon?.template = true
+
+    func applicationDidFinishLaunching(_ aNotification: Notification) {
+        let statusBar = NSStatusBar.system
+        statusBarItem = statusBar.statusItem(withLength: NSStatusItem.squareLength)
+        statusBarItem.button?.image = NSImage(named: "statusIcon")
+
+        let statusBarMenu = NSMenu(title: "Cap Status Bar Menu")
+        statusBarItem.menu = statusBarMenu
+
+        let m1 = NSMenuItem(title: "Capture Screen\t⇧⌘3", action: #selector(AppDelegate.captureScreenClicked),
+                             keyEquivalent: "")
+        statusBarMenu.addItem(m1)
+        let m2 = NSMenuItem(title: "Capture Window\t⇧⌘4 + Space", action: #selector(AppDelegate.captureWindowClicked), keyEquivalent: "")
+        statusBarMenu.addItem(m2)
+        let m3 = NSMenuItem(title: "Capture Area\t\t⇧⌘4", action: #selector(AppDelegate.captureAreaClicked),
+                           keyEquivalent: "")
+        statusBarMenu.addItem(m3)
+        statusBarMenu.addItem(.separator())
+        let m4 = NSMenuItem(title: "Select Destination...", action: #selector(AppDelegate.selectDestinationClicked),
+                           keyEquivalent: "")
+        statusBarMenu.addItem(m4)
+        statusBarMenu.addItem(.separator())
+        statusBarMenu.addItem(withTitle: "Quit", action: #selector(AppDelegate.quitClicked),
+                              keyEquivalent: "")
         
-        statusItem.image = icon
-        statusItem.menu = statusMenu
-        destinationFolder = execute(DEFAULTS, params: ["read", "com.apple.screencapture", "location"])
-        if !isDir(destinationFolder) {
-            destinationFolder = NSSearchPathForDirectoriesInDomains(.DesktopDirectory, .UserDomainMask, true)[0]
+        destinationFolder = execute(cmd: DEFAULTS, params: ["read", "com.apple.screencapture", "location"])
+        if !isDir(dir: destinationFolder) {
+            destinationFolder = NSSearchPathForDirectoriesInDomains(.desktopDirectory, .userDomainMask, true)[0]
         }
     }
 
+    @objc func quitClicked() {
+        NSApplication.shared.terminate(self)
+    }
+    
     func execute(cmd: String, params: [String]) -> String {
         //print(cmd, params)
-        let task = NSTask()
-        let pipe = NSPipe()
+        let task = Process()
+        let pipe = Pipe()
         
         task.launchPath = cmd
         task.arguments = params
@@ -84,47 +103,41 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         task.waitUntilExit()
         
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        var output: String = (NSString(data: data, encoding: NSUTF8StringEncoding) as? String)!
-        output = output.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
-        //print(output)
-        return output
+        if var output = String(data: data, encoding: String.Encoding.utf8) {
+            output = output.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+            //print(output)
+            return output
+        }
+        return "";
     }
     
-    @IBAction func quitClicked(sender: AnyObject) {
-        NSApplication.sharedApplication().terminate(self)
-    }
-    
-    @IBAction func selectDestinationClicked(sender: AnyObject) {
+    @objc func selectDestinationClicked(sender: AnyObject) {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
         panel.message = NSLocalizedString("Note: This changes directory also for the system wide shortcuts.", comment: "")
-        panel.directoryURL = NSURL(string: destinationFolder)
-        panel.beginWithCompletionHandler { (result) -> Void in
-            if result == NSFileHandlingPanelOKButton {
-                self.destinationFolder = (panel.URL?.path)!
-                self.execute(self.DEFAULTS, params: ["write", "com.apple.screencapture", "location", self.destinationFolder])
-                self.execute(self.KILLALL, params: ["SystemUIServer"])
-            }
+        panel.directoryURL = URL(string: destinationFolder)
+        if (panel.runModal() ==  NSApplication.ModalResponse.OK) {
+            self.destinationFolder = (panel.url?.path)!
+            self.execute(cmd: self.DEFAULTS, params: ["write", "com.apple.screencapture", "location", self.destinationFolder])
+            self.execute(cmd: self.KILLALL, params: ["SystemUIServer"])
         }
     }
     
-    @IBAction func captureWindowClicked(sender: AnyObject) {
-        execute(SC, params: ["-i", "-W", "-o", destinationFolder + saveName()])
+    @objc func captureWindowClicked(sender: AnyObject) {
+        execute(cmd: SC, params: ["-i", "-W", "-o", destinationFolder + saveName()])
     }
     
-    @IBAction func captureAreaClicked(sender: AnyObject) {
-        execute(SC, params: ["-i", destinationFolder + saveName()])
+    @objc func captureAreaClicked(sender: AnyObject) {
+        execute(cmd: SC, params: ["-i", destinationFolder + saveName()])
     }
     
-    @IBAction func captureScreenClicked(sender: NSMenuItem) {
+    @objc func captureScreenClicked(sender: NSMenuItem) {
         let delay = 0.1 * Double(NSEC_PER_SEC)
-        let time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
         
-        dispatch_after(time, dispatch_get_main_queue()) {
-            self.execute(self.SC, params: [self.destinationFolder + self.saveName()])
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            self.execute(cmd: self.SC, params: [self.destinationFolder + self.saveName()])
         }
     }
 }
-

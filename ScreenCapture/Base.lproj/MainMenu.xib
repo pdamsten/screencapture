@@ -1,8 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="19529" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="19529"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -12,49 +11,7 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <customObject id="Voe-Tx-rLC" customClass="AppDelegate" customModule="ScreenCapture" customModuleProvider="target">
-            <connections>
-                <outlet property="statusMenu" destination="8tz-gR-SIO" id="wRx-fr-gRE"/>
-            </connections>
-        </customObject>
+        <customObject id="Voe-Tx-rLC" customClass="AppDelegate" customModule="Testi_2" customModuleProvider="target"/>
         <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
-        <menu id="8tz-gR-SIO">
-            <items>
-                <menuItem title="Capture Screen" keyEquivalent="3" id="5Sx-IV-33j">
-                    <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
-                    <connections>
-                        <action selector="captureScreenClicked:" target="Voe-Tx-rLC" id="Xz0-e0-R6B"/>
-                    </connections>
-                </menuItem>
-                <menuItem title="Capture Window      ⇧⌘4  +" keyEquivalent=" " id="PdI-0N-URa">
-                    <attributedString key="attributedTitle"/>
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <connections>
-                        <action selector="captureWindowClicked:" target="Voe-Tx-rLC" id="E2T-b0-7uN"/>
-                    </connections>
-                </menuItem>
-                <menuItem title="Capture Area" keyEquivalent="4" id="Rso-Vz-vIL">
-                    <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
-                    <connections>
-                        <action selector="captureAreaClicked:" target="Voe-Tx-rLC" id="Yvq-Rc-dIZ"/>
-                    </connections>
-                </menuItem>
-                <menuItem isSeparatorItem="YES" id="Zzi-x3-82V"/>
-                <menuItem title="Select Destination..." id="77s-S8-1Jf">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <connections>
-                        <action selector="selectDestinationClicked:" target="Voe-Tx-rLC" id="vKJ-AB-ghV"/>
-                    </connections>
-                </menuItem>
-                <menuItem isSeparatorItem="YES" id="6My-fa-Z6P"/>
-                <menuItem title="Quit" id="DsK-rf-i5W">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <connections>
-                        <action selector="quitClicked:" target="Voe-Tx-rLC" id="rvw-gE-4Kd"/>
-                    </connections>
-                </menuItem>
-            </items>
-            <point key="canvasLocation" x="1679" y="537.5"/>
-        </menu>
     </objects>
 </document>
